@@ -2,7 +2,7 @@
  *  www.creatividadcodificada.com
  *  https://www.youtube.com/channel/UCt1cSSDbrTRxUxDEv7UNWwQ
  *  NOMBRE DEL PROYECTO: Melodias con tonos en Arduino
- *  música de DRAGON BALL, PACMAN,  MARIO BOROS, STAR WARS,TETRIS Y NOKIA  
+ *  música de DRAGON BALL, PACMAN,  MARIO BROS, STAR WARS,TETRIS Y NOKIA  
 */
 int btn = 2; 
 int pinSound = 9;

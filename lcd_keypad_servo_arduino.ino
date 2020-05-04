@@ -1,86 +1,150 @@
 /* AUTOR: CREATIVIDAD CODIFICADA
  *  www.creatividadcodificada.com
- *  NOMBRE DEL PROYECTO: LCD, KEYPAD Y SERVO CON ARDUINO 
- *      
- *  ******* [CONTROL DE SERVO MEDIANTE UN MENU ] *******
-*/ 
-#include <Servo.h>
-#include <Keypad.h>
-#include <LiquidCrystal.h>
+ *  NOMBRE DEL PROYECTO: LCD, KEYPAD Y SERVOMOTOR CON ARDUINO
+ *  
+ *  ******* [ MENU CON LCD 16X2, KEYPAD 4X4 Y SERVOMOTOR GS90 CON ARDUINO ] *******
+*/
 
-LiquidCrystal lcd(A0, A1, A2, A3, A4, A5); // varible LCD y pines
-const byte filas = 4; // número de filas '4'
-const byte columnas = 4; // número de columans '4'
+#include <LiquidCrystal.h> // Librería para el manejo del LCD
+#include <Keypad.h> // Librería para el manejo del teclado matricial
+#include <Servo.h> // Librería para el manejo del servomotor
 
-char teclado [filas][columnas]={
-{'1','2','3','A'},
-{'4','5','6','B'},
-{'7','8','9','C'},
-{'*','0','#','D'}
-}; //variable teclado
+LiquidCrystal lcd(A0, A1, A2, A3, A4, A5); // Pines usados para el LCD
+const byte filas = 4; // número de filas
+const byte columnas = 4; // número de columnas
 
-byte filaPines[filas]={11,10,9,8}; //configuración de filas
-byte columnaPines[columnas]={7,6,5,4}; // configuración de columnas
+char teclas [filas][columnas] = {
+  {'1','2','3','A'},
+  {'4','5','6','B'},
+  {'7','8','9','C'},
+  {'*','0','#','D'}
+  };
+byte filaPines[filas]={11,10,9,8}; // Pines de conexion para el teclado matricial
+byte columnaPines[columnas] = {7,6,5,4};
+Keypad teclado = Keypad(makeKeymap(teclas),filaPines,columnaPines,filas, columnas);
 
-Keypad calcu = Keypad (makeKeymap(teclado),filaPines, columnaPines, filas, columnas);
+// Caracter personalizado "°"
+byte grados[8] = {
+  0b01110,
+  0b11011,
+  0b10001,
+  0b11011,
+  0b01110,
+  0b00000,
+  0b00000,
+  0b00000
+  };
+//Nombre asignado a nuestro servo
+Servo servo1;
 
-Servo servo1, servo2;
-int gradosBoton = 90;
-int pinPoten = 0;
-int leerPoten;
-int gradosPoten;
+// Variables
+char key;
+String num, aux;
+byte i = 0;
+byte menu = 0;
 
-boolean inicio = false; 
-boolean final = false; // variables de control
-
-String num1, num2;
-int ans;
-char op;
 
 void setup() {
- //attachInterrupt(digitalPinToInterrupt(2),sumarGrados,RISING);
- //attachInterrupt(digitalPinToInterrupt(3),restarGrados,RISING); 
- //Serial.begin(9600);
-
- 
- //  Enviamos las señales a los servomotores por los pines 9 y 10
- // y los calibramos 
- servo1.attach(3,720,2250);
-
   lcd.begin(16,2);
-  lcd.setCursor(0,0);
-  lcd.print("Creatividad"); //Prendido de pantalla
-  lcd.setCursor(5,1);
-  lcd.print("Codificada"); //Prendido de pantalla
-  delay(2500);
-  lcd.clear();
+  lcd.createChar(0,grados);
+  servo1.attach(3,720,2350);
+  
 }
 
 void loop() {
+  
+  // Menu principal y el submenu
+  if(menu == 0) menuPrincipal();
+  if(menu == 1) manual();
+}
 
- char key = calcu.getKey();
- if (key != NO_KEY && (key=='1' || key=='2' || key=='3' || key=='4' || key=='5' || key=='6' || key=='7' || key=='8' || key=='9' || key=='0')) 
- {
-      num1 = num1 + key;
-      int numLength = num1.length();
-      lcd.setCursor(15-numLength,0);
-      lcd.print(num1); 
-  }  
-
-  if (key !=NO_KEY && key == '#')
+void menuPrincipal()
 {
-    
-    int x = num1.toInt();
-    servo1.write(x);
-    
-    lcd.clear();
-    lcd.setCursor(15,0);
-    lcd.autoscroll();
-    lcd.print(num1.toInt());
-    lcd.noAutoscroll();    
-     lcd.setCursor(15,1);
-     lcd.print(x);
-}
-}
+  lcd.setCursor(0,0);
+  lcd.print("1>0");
+  lcd.write(byte(0));
+  lcd.setCursor(8,0);
+  lcd.print("2>90");
+  lcd.write(byte(0));
+  lcd.setCursor(0,1);
+  lcd.print("3>180");
+  lcd.write(byte(0));
+  lcd.print("*>MANUAL");
+  key = teclado.getKey();
+
+  // Realizamos condicionales para escoger varias opciones desde el teclado matricial
+  if(key == '*') {menu = 1; lcd.clear();}
+  if(key == '1') servo1.write(0);
+  if(key == '2') servo1.write(90);
+  if(key == '3') servo1.write(180);
+ }
+void manual()
+{
+  lcd.setCursor(0,1);
+  lcd.print("B<-Back");
+  lcd.setCursor(8,1);
+  lcd.print("C<-Clear");
+  delay(50);
+
+  key = teclado.getKey();
+  if(key != NO_KEY)
+  {
+    switch(key)
+    {
+      case 'A':
+        lcd.clear();
+        lcd.setCursor(3,0);
+        lcd.print("SERVO ");
+        lcd.setCursor(9,0);
+        lcd.print(aux);
+        lcd.write(byte(0));
+        if(aux.toInt()>180)
+        {
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print("Numero No valido");
+          }
+        else
+          servo1.write(aux.toInt());  
+          num = "";
+          i = 0;
+      break;
+      case 'B':
+        lcd.clear();
+        menu = 0;
+      break;
+      case 'C':
+        lcd.clear();
+        i = 0;
+        num = "";
+      break;
+      case 'D':
+        // Añadir mas funciones si se lo requiere
+      break;
+      case '#':
+        // Añadir mas funciones si se lo requiere
+      break;
+      case '*':
+        // Añadir mas funciones si se lo requiere
+      break;
+      default:
+        if(i < 3)
+        {
+          lcd.clear();
+          lcd.setCursor(6,0);
+          num = num + key;
+          lcd.print(num);
+          aux = num;
+          i++;
+          if(i == 3)
+          {
+            i = 0;
+            num = "";
+            }
+          }
+      break;
+      }
+    }
+  } 
 
  
